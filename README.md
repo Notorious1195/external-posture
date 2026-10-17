@@ -1,5 +1,11 @@
 # External Posture (v25)
 
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
+![LLM](https://img.shields.io/badge/LLM-Qwen%20%C2%B7%20LM%20Studio-72F3AD)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Status](https://img.shields.io/badge/status-experimental-orange)
+
 A phased, Streamlit-based tool for **authorized external security posture
 assessment**. The app connects over SSH to a Kali host where the reconnaissance
 and evaluation tools run, enriches findings with public cyber-threat
@@ -13,6 +19,48 @@ endpoint, and any API keys are entered in the interface.
 > ⚠️ **Authorized use only.** Scan only targets you are **explicitly authorized**
 > to test. All evaluation is non-intrusive (passive/observational); no
 > exploitation or evasion is performed.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph OP["Operator workstation"]
+        UI["Streamlit UI<br/>(phased wizard)"]
+        QWEN["Local LLM<br/>Qwen · LM Studio"]
+    end
+
+    subgraph KALI["Kali Linux (over SSH)"]
+        TOOLS["Recon &amp; evaluation<br/>Nmap · HTTPx · ZAP (passive)<br/>Subfinder · Nikto · FFUF · Wafw00f"]
+    end
+
+    subgraph PIPE["Deterministic pipeline (rules only)"]
+        SCOPE["1 · Scope &amp; attribution"] --> DISC["2 · Asset discovery"]
+        DISC --> EVAL["3 · External evaluation"]
+        EVAL --> CONS["4 · Finding consolidation"]
+        CONS --> SCORE["5 · Coverage-aware scoring<br/>(score + interval)"]
+        SCORE --> RISK["6 · Qualitative risk matrix"]
+    end
+
+    CTI["Public CTI<br/>CVE · EPSS · KEV · DNS/cert sources"]
+    REPORT["7 · Report"]
+    DOCX["Word report<br/>(.docx + evidence JSON)"]
+
+    UI -- SSH --> TOOLS
+    TOOLS --> SCOPE
+    CTI -. indications .-> CONS
+    RISK --> REPORT
+    QWEN -. drafting under<br/>consistency gates .-> REPORT
+    REPORT --> DOCX
+
+    classDef llm fill:#214b39,stroke:#72f3ad,color:#eafff4;
+    class QWEN llm;
+```
+
+The LLM only **drafts prose**; the score, evidence states, and risk are computed
+by deterministic rules and are never modified by the model. Public CTI enters as
+corroborating *indications*, never as ground truth.
 
 ---
 
